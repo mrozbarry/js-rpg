@@ -1,0 +1,22 @@
+{
+  "name": "js-rpg",
+  "version": "0.0.1",
+  "description": "Javascript Multiplayer RPG",
+  "main": "index.js",
+  "author": "Alex Barry",
+  "license": "MIT",
+  "dependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-preset-env": "^1.6.1",
+    "firebase": "^4.6.1",
+    "webpack": "^2",
+    "webpack-dev-server": "^2.9.4",
+    "wepback": "^1.0.0"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^4.0.1"
+  }
+}
