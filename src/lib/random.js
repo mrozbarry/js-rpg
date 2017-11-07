@@ -3,6 +3,6 @@ export default function random(low, high) {
 }
 
 export function randomElement(array) {
-  const index = random(0, array.length - 1)
+  const index = Math.floor(random(0, array.length - 1))
   return array[index]
 }

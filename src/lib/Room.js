@@ -2,30 +2,32 @@
  * Taken and modified from https://github.com/nickgravelyn/dungeon/blob/master/room.js
  */
 
-import TileGroup, { TILES } from "./TileGroup"
+import * as TILES from "./Tiles"
+import CellGrid from "./CellGrid"
 import rand, { randomElement } from "./random"
 
-export default class Room extends TileGroup {
+export default class Room extends CellGrid {
   constructor({ width, height, x, y }) {
-    super({ width, height, x, y })
+    super({ width, height })
+    this.position = { x, y }
 
-    this.eachTile((_, x, y, idx) => {
-      if (y === 0 || y === this.size.y - 1 || x === 0 || x === this.size.x - 1) {
-        this.tiles[idx] = TILES.wall
+    this.map((cellX, cellY) => {
+      if (cellY === 0 || cellY === this.size.y - 1 || cellX === 0 || cellX === this.size.x - 1) {
+        return TILES.wall
       }
-      this.tiles[idx] = TILES.floor
+      return TILES.floor
     })
   }
 
   hasStairs() {
-    return this.tiles.some((tileId) =>
-      tileId === TILES.stairsDown || tileId === TILES.stairsUp
+    return this.some((x, y, cell) =>
+      cell === TILES.stairsDown || cell === TILES.stairsUp
     )
   }
 
   getDoorLocations() {
-    return this.reduceTile((doors, tile, x, y, idx) => {
-      if (tile === TILES.door) {
+    return this.reduce((doors, x, y, cell) => {
+      if (cell === TILES.door) {
         return doors.concat({ x, y })
       }
       return doors
@@ -33,22 +35,22 @@ export default class Room extends TileGroup {
   }
 
   isConnectedToRoom(target) {
-    return this.getDoorLocations().some((door) => {
-      const doorPosition = {
+    return this.getDoorLocations().some((doorPosition) => {
+      const position = {
         x: this.position.x + door.x - target.position.x,
         y: this.position.y + door.y - target.position.y
       }
 
-      if (target.localContains(doorPosition)) {
-        const targetTileIndex = target.positionToIndex(doorPosition)
-        return target.tiles[targetTileIndex] === TILES.door
+      if (target.localContains(position)) {
+        return target.cells[position.y][position.x] === TILES.door
       }
+
       return false
     })
   }
 
-  doorToRoom(target) {
-    switch(this._directionToRoom(target)) {
+  calculateDoorTo(target) {
+    switch(this.directionToRoom(target)) {
     case "north":
       return {
         x: rand(
@@ -89,51 +91,69 @@ export default class Room extends TileGroup {
     return { x: -1, y: -1 }
   }
 
-  _directionToRoom(target) {
-    if (this.position.y === target.position.y - this.size.y - 1) {
-      return "north"
+  directionToRoom(target) {
+    console.log({ position: this.position, size: this.size }, { position: target.position, size: target.size })
+    let direction = null
+    if (this.position.y === target.position.y - this.size.y + 1) {
+      direction = "north"
+
     } else if (this.position.x === target.position.x - this.size.x + 1) {
-      return "west"
+      direction = "west"
+
     } else if (this.position.x === target.position.x + target.size.x - 1) {
-      return "east"
+      direction = "east"
+
     } else if (this.position.y === target.position.y + target.size.y - 1) {
-      return "south"
+      direction = "south"
+
     }
-    return "unknown"
+    console.log(' ', direction)
+    return direction
   }
 
-  _findRoomAttachment(target) {
-    const room = randomElement(this.rooms)
+  _findRoomAttachment(r) {
+    let position = { x: -1, y: -1 }
 
-    const position = () => {
-      switch(randomElement(["north", "east", "south", "west"])) {
-      case "north":
-        return {
-          x: rand(room.position.x - target.size.x + 3, room.position.x + room.size.x - 2),
-          y: room.position.y - target.size.y + 1
-        }
-
-      case "west":
-        return {
-          x: room.position.x - room.size.x + 1,
-          y: rand(room.position.y - target.size.y + 3, room.position.y + room.size.y - 2)
-        }
-
-      case "east":
-        return {
-          x: room.position.x - room.size.x - 1,
-          y: rand(room.position.y - target.size.y + 3, room.position.y + room.size.y - 2)
-        }
-
-      case "south":
-        return {
-          x: rand(room.position.x - target.size.x + 3, room.position.x + room.size.x - 2),
-          y: room.position.y - room.size.y - 1
-        }
-
+    switch(randomElement(["north", "east", "south", "west"])) {
+    case "north":
+      position = {
+        x: Math.round(rand(r.position.x - this.size.x + 3, r.position.x + r.size.x - 2)),
+        y: r.position.y - this.size.y + 1
       }
+
+    case "west":
+      position = {
+        x: r.position.x - this.size.x + 1,
+        y: Math.round(rand(r.position.y - this.size.y + 3, r.position.y + r.size.y - 2))
+      }
+
+    case "east":
+      position = {
+        x: r.position.x - r.size.x - 1,
+        y: Math.round(rand(r.position.y - this.size.y + 3, r.position.y + r.size.y - 2))
+      }
+
+    case "south":
+      position = {
+        x: Math.round(rand(r.position.x - this.size.x + 3, r.position.x + r.size.x - 2)),
+        y: r.position.y - r.size.y - 1
+      }
+
     }
 
-    return { position: position(), target: room }
+    return { position, target: r }
+  }
+
+  intersects(room) {
+    const x1 = this.position.x
+    const y1 = this.position.y
+    const w1 = this.size.x
+    const h1 = this.size.y
+    const x2 = room.position.x
+    const y2 = room.position.y
+    const w2 = room.size.x
+    const h2 = room.size.y
+
+    return !(x1 + w1 < x2 + 1 || x1 >= x2 + w2 - 1 || y1 + h1 <= y2 + 1 || y1 >= y2 + h2 - 1)
   }
 }

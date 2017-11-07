@@ -2,11 +2,17 @@
  * Taken and modified from https://github.com/nickgravelyn/dungeon/blob/master/dungeon.js
  */
 
-import Size from "./Size"
+import * as TILES from "./Tiles"
+import CellGrid from "./CellGrid"
+import Room from "./Room"
+import rand, { randomElement } from "./random"
 
-class Floor extends Size {
+export default class Floor {
   constructor(options) {
-    super(options)
+    this.size = {
+      x: options.size.x,
+      y: options.size.y
+    }
 
     this.options = {
       minRoomSize: 5,
@@ -14,48 +20,11 @@ class Floor extends Size {
       maxNumRooms: 50,
       maxRoomArea: 150,
       addStairsUp: true,
-      addStairsDown: true
+      addStairsDown: true,
       ...options
     }
     this.rooms = []
-    this.tiles = new TileGroup({ width: 1, height: 1 })
-    this.collisionMap = []
   }
-
-  addRoom(room) {
-    if (!this._canFitRoom(room)) {
-      return false
-    }
-    this.rooms.push(room)
-    return true
-  }
-
-  _cacheMap() {
-    this._setTiles()
-    this._setCollisionMap()
-  }
-
-  _setTiles() {
-    this.tiles = this.rooms.reduce((worldTiles, room) => {
-      return room.reduceTile((tiles, x, y, tile, idx) => {
-        if (tile !== TILES.blank) {
-          tiles.set(x + room.position.x, y + room.position.y, tile)
-        } else {
-          tiles.set(x + room.position.x, y + room.position.y, undefined)
-        }
-        return tiles
-      }, worldTiles)
-    }, this.tiles)
-  }
-
-  _setCollisionMap() {
-    const collidable = [TILES.wall, TILES.stairsUp, TILES.stairsDown]
-    this.collisionMap = this.tiles.reduceTile((map, tile, x, y) => {
-      map.set(x, y, collidable.indexOf(tile) >= 0 ? tile : 0)
-      return map
-    }, new TileGroup({ width: this.size.x, height: this.size.y }))
-  }
-
 
   getStairs() {
     return this.rooms.reduce((stairs, room) => {
@@ -64,11 +33,12 @@ class Floor extends Size {
       }
 
       if (room.hasStairs()) {
-        return room.reduceTile((memo, x, y, tile, idx) => {
+        return room.reduce((memo, x, y, cell, idx) => {
           const position = { x: room.pos.x + x, y: room.pos.y + y }
-          if (tile === Tiles.StairsUp) {
+
+          if (tile === TILES.stairsUp) {
             return { ...memo, up: position }
-          } else if (tile === Tiles.StairsDown) {
+          } else if (tile === TILES.stairsDown) {
             return { ...memo, down: position }
           }
           return memo
@@ -80,12 +50,12 @@ class Floor extends Size {
 
   generate() {
     this.rooms = []
-    this.tiles = []
-    this.collisionMap = []
+    this.roomGrid = new CellGrid({ width: this.size.x, height: this.size.y })
+    this.roomGrid.map(() => [])
 
     const room = this._createRandomRoom()
     room.position = {
-      x: Math.floor(this.size.x / 2) - Math.floot(room.size.x / 2),
+      x: Math.floor(this.size.x / 2) - Math.floor(room.size.x / 2),
       y: Math.floor(this.size.y / 2) - Math.floor(room.size.y / 2)
     }
     this.addRoom(room)
@@ -97,79 +67,133 @@ class Floor extends Size {
 
     this.rooms.forEach((room, idx1) => {
       const targets = this._getPotentiallyTouchingRooms(room)
+
       targets.forEach((target, idx2) => {
         if (!room.isConnectedToRoom(target)) {
           if (Math.random() < 0.2) {
-            this._addDoor(this._findNewDoorLocation(room, target), [idx1, idx2])
+            this._addDoor(room.calculateDoorTo(target))
           }
         }
       })
     })
 
     if (this.options.addStairsDown) {
-      this._addStairs(Tiles.StairsDown)
+      this._addStairs(TILES.stairsDown)
     }
     if (this.options.addStairsUp) {
-      this._addStairs(Tiles.StairsUp)
+      this._addStairs(TILES.stairsUp)
     }
   }
 
-  _addDoor(position, roomIndexes) {
-    roomIndexes.forEach((idx) => {
-      const pos = {
-        x: position.x - this.rooms[idx].x,
-        y: position.y - this.rooms[idx].y
+  addRoom(room) {
+    if (!this._canFitRoom(room)) {
+      return false
+    }
+    this.rooms.push(room)
+
+    for(let y = room.position.y; y < room.position.y + room.size.y; y++) {
+      for(let x = room.position.x; x < room.position.x + room.size.x; x++) {
+        console.log(x, this.roomGrid.cells[y])
+        this.roomGrid.cells[y][x].push(room)
       }
-      this.rooms[idx].set(pos.x, pos.y, TILES.door)
+    }
+
+    return true
+  }
+
+  _addDoor(position) {
+    this.roomGrid.cells[position.y][position.x].forEach((room) => {
+      const x = position.x - room.position.x
+      const y = position.y - room.position.y
+      room.cells[y][x] = TILES.door
     })
   }
 
   _createRandomRoom() {
-    let size = new Size({ width: 0, height: 0 })
-    while (true) {
-      size = new Size({
-        width: rand(this.options.minRoomSize, this.options.maxRoomSize),
-        height: rand(this.options.minRoomSize, this.options.maxRoomSize),
-      })
+    let width = 0
+    let height = 0
+    let area = 0
 
-      if (this.options.maxRoomArea > 0 && size.area() > this.maxRoomArea) {
-        break
-      }
-    }
+    do {
+      width = Math.round(rand(this.options.minRoomSize, this.options.maxRoomSize))
+      height = Math.round(rand(this.options.minRoomSize, this.options.maxRoomSize))
+      area = width * height
+    } while (this.options.maxRoomArea > 0 && area > this.options.maxRoomArea)
 
-    return new Room({
-      width: size.size.x,
-      height: size.size.y
-    })
+    return new Room({ width, height })
   }
 
   _generateRoom() {
     const room = this._createRandomRoom()
     for(let attempt = 0; attempt < 150; attempt++) {
-      const r = this._findRoomAttachment(room)
+      const target = randomElement(this.rooms)
+      const r = room._findRoomAttachment(target)
       room.position = r.position
+
       if (this.addRoom(room)) {
-        this._addDoor()
+        this._addDoor(room.calculateDoorTo(target))
+        break
       }
     }
   }
 
-  _findNewDoorLocation(room, target) {
-  }
-
   _canFitRoom(room) {
-    const tooBigX = room.position.x < 0 || room.position.x + room.size.x > this.size.x - 1
-    const tooBigY = room.position.y < 0 || room.position.y + room.size.y > this.size.y - 1
-    if (tooBigX || tooBigY) {
-      return false
-    }
-    return this.rooms.all((placedRoom) => !placedRoom.intersects(room))
+    if (room.position.x < 0 || room.position.x + room.size.x > this.size.x - 1) return false
+    if (room.position.y < 0 || room.position.y + room.size.y > this.size.y - 1) return false
+
+    return this.rooms.every((otherRoom) => !room.intersects(otherRoom))
   }
 
   _getPotentiallyTouchingRooms(room) {
-    const otherRooms = this.rooms.filter((otherRoom) => otherRoom !== room)
-    const touchingRooms = otherRooms.filter((otherRoom) => {
-      return otherRoom.sharesBoundary(room)
-    })
+    let touchingRooms = []
+
+    const checkRoomList = (x, y) => {
+      this.roomGrid.cells[y][x].forEach((r) => {
+        if (r !== room && touchingRooms.indexOf(r) === -1) {
+          const lx = x - r.position.x
+          const ly = y - r.position.y
+          if ((lx > 0 && lx < r.size.x - 1) || (ly > 0 && ly < r.size.y - 1)) {
+            touchingRooms.push(r)
+          }
+        }
+      })
+    }
+
+    for(let x = room.position.x + 1; x < room.position.x + room.size.x - 1; x++) {
+      checkRoomList(x, room.position.y)
+      checkRoomList(x, room.position.y + room.size.y - 1)
+    }
+
+    for(let y = room.position.y + 1; y < room.position.y + room.size.y - 1; y++) {
+      checkRoomList(room.position.x, y)
+      checkRoomList(room.position.x + room.size.x - 1, y)
+    }
+
+    return touchingRooms
+  }
+
+  _addStairs (tile) {
+    let room = null
+    do {
+      room = randomElement(this.rooms)
+    } while (room.getDoorLocations().length > 1 || room.hasStairs())
+
+    const candidates = room.reduce((memo, x, y, cell) => {
+      if (cell !== TILES.floor) return memo
+
+      const doorAbove = room.cells[y - 1][x] === TILES.door
+      const doorBelow = room.cells[y + 1][x] === TILES.door
+      const doorLeft = room.cells[y][x - 1] == TILES.door
+      const doorRight = room.cells[y][x + 1] == TILES.door
+      if (doorAbove || doorBelow || doorLeft || doorRight) return memo
+
+      return memo.concat({ x, y })
+    }, [])
+
+    console.log('_addStairs', candidates)
+
+    const loc = randomElement(candidates)
+    console.log(' ', loc)
+    room.cells[loc.y][loc.x] = tile
   }
 }
