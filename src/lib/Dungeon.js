@@ -10,6 +10,7 @@ export default class Dungeon {
     this.maxRoomSize = 15
     this.maxNumRooms = 50
     this.maxRoomArea = 150
+    this.seed = `randomSeed-${width}x${height}-please-change-me`
     
     this.addStairsUp = true
     this.addStairsDown = true
@@ -19,62 +20,33 @@ export default class Dungeon {
   }
 
   getStairs() {
-    var result = { up: null, down: null }
-    for (var i = 0; i < this.rooms.length; i++) {
-      var r = this.rooms[i]
-
-      if (r.hasStairs()) {
-        for (var y = 0; y < r.size.y; y++) {
-          for (var x = 0; x < r.size.x; x++) {
-            if (r.cells[y][x] == TILES.stairsUp) {
-              result.up = { x: r.position.x + x, y: r.position.y + y }
-            }
-            else if (r.cells[y][x] == TILES.stairsUp) {
-              result.down = { x: r.position.x + x, y: r.position.y + y }
+    return this.rooms.reduce((stairs, room) => {
+      let nextStairs = stairs
+      room.each((x, y, tile) => {
+        if ([TILES.stairsUp, TILES.stairsDown].indexOf(tile) >= 0) {
+          const key = tile === TILES.stairsUp ? "up" : "down"
+          nextStairs = {
+            ...stairs,
+            [key]: {
+              x: room.position.x + x,
+              y: room.position.y + y
             }
           }
         }
-      }
-    }
-    return result
+      })
+      return nextStairs
+    }, { up: null, down: null })
   }
 
-  generate() {
+  generate(seed) {
     // clear
-    this.rooms = [ ]
+    this.rooms = []
     this.roomGrid.map(() => [])
 
-    // seed the map with a starting randomly sized room in the center of the map
-    var room = this.createRandomRoom()                
-    room.position = {
-      x: Math.floor(this.size.x / 2) - Math.floor(room.size.x / 2),
-      y: Math.floor(this.size.y / 2) - Math.floor(room.size.y / 2)
-    }            
-    this.addRoom(room)
+    this._addInitialRoom()
+    this._addRemainingRooms()
+    this._connectRoomsWithDoors()
 
-    // continue generating rooms until we hit our cap or have hit our maximum iterations (generally
-    // due to not being able to fit any more rooms in the map)
-    var iter = this.maxNumRooms * 5
-    while ((this.maxNumRooms <= 0 || this.rooms.length < this.maxNumRooms) && iter-- > 0) { 
-      this.generateRoom()
-    }
-
-    // now we want to randomly add doors between some of the rooms and other rooms they touch
-    for (var i = 0; i < this.rooms.length; i++) {
-      // find all rooms that we could connect with this one
-      var targets = this.getPotentiallyTouchingRooms(this.rooms[i])
-      for (var j = 0; j < targets.length; j++) {                    
-        // make sure the rooms aren't already connected with a door
-        if (!this.rooms[i].isConnectedTo(targets[j])) {
-          // 20% chance we add a door connecting the rooms
-          if (Math.random() < 0.2) {
-            this.addDoor(this.rooms[i].doorLocationTo(targets[j]))
-          }
-        }
-      }
-    }
-
-    // add stairs if desired
     if (this.addStairsDown) {
       this.addStairs(TILES.stairsDown)
     }
@@ -83,73 +55,99 @@ export default class Dungeon {
     }
   }
 
-  getFlattenedTiles() {
-    // create the full map for the whole dungeon
-    var tiles = Array(this.size.y)
-    for (var y = 0; y < this.size.y; y++) { 
-      tiles[y] = Array(this.size.x) 
-      for (var x = 0; x < this.size.x; x++) {
-        tiles[y][x] = null
-      }
-    }
-
-    // fill in the map with details from each room
-    for (var i = 0; i < this.rooms.length; i++) {
-      var r = this.rooms[i]            
-      for (var y = 0; y < r.size.y; y++) {
-        for (var x = 0; x < r.size.x; x++) {
-          // no need to make objects for blank tiles
-          if (r.cells[y][x] != 0) {
-            // the tiles we give back are objects with some extra data
-            tiles[y + r.position.y][x + r.position.x] = {
-              type: r.cells[y][x],
-              hasBeenSeen: false
-            }
-          }
-        }
-      }
-    }
-
-    // return the map to the caller
-    return tiles
+  _addInitialRoom() {
+    const room = this.createRandomRoom()                
+    room.position = {
+      x: Math.floor(this.size.x / 2) - Math.floor(room.size.x / 2),
+      y: Math.floor(this.size.y / 2) - Math.floor(room.size.y / 2)
+    }            
+    this.addRoom(room)
   }
 
-  getCollisionMap() {
-    // create the full collision map for the whole dungeon
-    var collisionMap = Array(this.size.y)
-    for (var y = 0; y < this.size.y; y++) { 
-      collisionMap[y] = Array(this.size.x) 
-      for (var x = 0; x < this.size.x; x++) {
-        collisionMap[y][x] = 0
-      }
+  _addRemainingRooms() {
+    let iter = this.maxNumRooms * 5
+    while ((this.maxNumRooms <= 0 || this.rooms.length < this.maxNumRooms) && iter-- > 0) { 
+      this.generateRoom()
     }
-
-    // fill in the collision map with details from each room
-    for (var i = 0; i < this.rooms.length; i++) {
-      var r = this.rooms[i]            
-      for (var y = 0; y < r.size.y; y++) {
-        for (var x = 0; x < r.size.x; x++) {
-          var value = 0
-          switch (r.cells[y][x]) {
-            case TILES.wall:
-              value = 1
-              break
-            case TILES.stairsUp:
-              value = 2
-              break
-            case TILES.stairsDown:
-              value = 3
-              break
-          }
-
-          collisionMap[y + r.position.y][x + r.position.x] = value
-        }
-      }
-    }
-
-    // return the map to the caller
-    return collisionMap
   }
+
+  _connectRoomsWithDoors() {
+    this.rooms.forEach((room) => {
+      this.getPotentiallyTouchingRooms(room).forEach((target) => {
+        if (!room.isConnectedTo(target) && Math.random() < 0.2) {
+          this.addDoor(room.doorLocationTo(target))
+        }
+      })
+    })
+  }
+
+  // getFlattenedTiles() {
+  //   // create the full map for the whole dungeon
+  //   var tiles = Array(this.size.y)
+  //   for (var y = 0; y < this.size.y; y++) { 
+  //     tiles[y] = Array(this.size.x) 
+  //     for (var x = 0; x < this.size.x; x++) {
+  //       tiles[y][x] = null
+  //     }
+  //   }
+  //
+  //   // fill in the map with details from each room
+  //   for (var i = 0; i < this.rooms.length; i++) {
+  //     var r = this.rooms[i]            
+  //     for (var y = 0; y < r.size.y; y++) {
+  //       for (var x = 0; x < r.size.x; x++) {
+  //         // no need to make objects for blank tiles
+  //         if (r.cells[y][x] != 0) {
+  //           // the tiles we give back are objects with some extra data
+  //           tiles[y + r.position.y][x + r.position.x] = {
+  //             type: r.cells[y][x],
+  //             hasBeenSeen: false
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  //
+  //   // return the map to the caller
+  //   return tiles
+  // }
+  //
+  // getCollisionMap() {
+  //   // create the full collision map for the whole dungeon
+  //   var collisionMap = Array(this.size.y)
+  //   for (var y = 0; y < this.size.y; y++) { 
+  //     collisionMap[y] = Array(this.size.x) 
+  //     for (var x = 0; x < this.size.x; x++) {
+  //       collisionMap[y][x] = 0
+  //     }
+  //   }
+  //
+  //   // fill in the collision map with details from each room
+  //   for (var i = 0; i < this.rooms.length; i++) {
+  //     var r = this.rooms[i]            
+  //     for (var y = 0; y < r.size.y; y++) {
+  //       for (var x = 0; x < r.size.x; x++) {
+  //         var value = 0
+  //         switch (r.cells[y][x]) {
+  //           case TILES.wall:
+  //             value = 1
+  //             break
+  //           case TILES.stairsUp:
+  //             value = 2
+  //             break
+  //           case TILES.stairsDown:
+  //             value = 3
+  //             break
+  //         }
+  //
+  //         collisionMap[y + r.position.y][x + r.position.x] = value
+  //       }
+  //     }
+  //   }
+  //
+  //   // return the map to the caller
+  //   return collisionMap
+  // }
 
   canFitRoom(room) {
     // make sure the room fits inside the dungeon
