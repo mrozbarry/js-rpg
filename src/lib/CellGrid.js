@@ -1,5 +1,5 @@
 export default class CellGrid {
-  constructor({ width, height }) {
+  constructor(width, height) {
     this.cells = []
     this.resize({ width, height })
   }
@@ -37,7 +37,6 @@ export default class CellGrid {
   }
 
   map(callback) {
-    console.log('CellGrid.map', this.cells)
     for(let y = 0; y < this.size.y; y++) {
       for(let x = 0; x < this.size.x; x++) {
         this.cells[y][x] = callback(x, y, this.cells[y][x])

@@ -1,5 +1,5 @@
-import Floor from "./lib/Floor"
+import Dungeon from "./lib/Dungeon"
 
-const f = new Floor({ size: { width: 100, height: 100 } })
+const f = new Dungeon(100, 100)
 f.generate()
 console.log(f)
