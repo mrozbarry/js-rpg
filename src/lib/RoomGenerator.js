@@ -37,16 +37,17 @@ export default class RoomGenerator extends Generator {
       const colour = randColour(this.dungeon.rnd)
       for(let wx = room.x; wx < room.x + room.w; wx += 1) {
         for(let wy = room.y; wy < room.y + room.h; wy += 1) {
-          const wallDirections =
-            []
-            .concat(wy === room.y ? "N" : [])
-            .concat(wx === (room.x + room.w - 1) ? "E" : [])
-            .concat(wy === (room.y + room.h - 1) ? "S" : [])
-            .concat(wx === room.x ? "W" : [])
-            .join("")
+          // const wallDirections =
+          //   []
+          //   .concat(wy === room.y ? "N" : [])
+          //   .concat(wx === (room.x + room.w - 1) ? "E" : [])
+          //   .concat(wy === (room.y + room.h - 1) ? "S" : [])
+          //   .concat(wx === room.x ? "W" : [])
+          //   .join("")
 
           const cell = new Cell()
-          cell.asFloor(wallDirections)
+          // cell.asFloor(wallDirections)
+          cell.asFloor("")
           cell.meta.colour = colour
           cell.meta.isRoom = true
 

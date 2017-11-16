@@ -26,21 +26,6 @@ export default class Renderer {
 
   setDungeon(dungeon) {
     this.dungeon = dungeon
-    this.cameraAt(0, 0)
-  }
-
-  cameraTo(dx, dy) {
-    this.cameraAt(
-      this.camera.x + dx,
-      this.camera.y + dy
-    )
-  }
-
-  cameraAt(x, y) {
-    this.camera = {
-      x: x,
-      y: y
-    }
   }
 
   setCanvas(canvas) {
@@ -59,7 +44,7 @@ export default class Renderer {
     this.canvas.height = this.size.y
   }
 
-  draw() {
+  drawMap() {
     if (!this.ctx) return
 
     this.ctx.fillStyle = "#444"
@@ -91,8 +76,8 @@ export default class Renderer {
       //
       // }
       this.ctx.fillStyle = cell.meta.colour
-      const cellX = (x * this.tileSize) - this.camera.x
-      const cellY = (y * this.tileSize) - this.camera.y
+      const cellX = (x * this.tileSize) //- this.camera.x
+      const cellY = (y * this.tileSize) //- this.camera.y
       this.ctx.fillRect(cellX, cellY, this.tileSize, this.tileSize)
       this._drawWalls(cell, cellX, cellY, this.tileSize, this.tileSize)
     })
@@ -107,7 +92,7 @@ export default class Renderer {
     }
 
     const olw = this.ctx.lineWidth
-    this.ctx.lineWidth = 3
+    this.ctx.lineWidth = 2
     this.ctx.strokeStyle = "black"
     cell.walls.split("").forEach((directionKey) => {
       const line = wall[directionKey]

@@ -15,10 +15,17 @@ export default class Input {
       down: 74,
       right: 76,
       action: 188,
+    },
+    arrows: {
+      up: 38,
+      left: 37,
+      down: 40,
+      right: 39,
+      action: 32
     }
   }
 
-  constructor(preset = "wasd") {
+  constructor(preset) {
     this.mapKeyCodes(Input.presets[preset] || Input.presets.wasd)
     this.reset()
     this.state = { up: false, left: false, down: false, right: false }
@@ -55,6 +62,8 @@ export default class Input {
   }
 
   keyDown(e) {
+    if (e.altKey || e.ctrlKey || e.metaKey) return
+
     return mappings.map((dir) => {
       if (e.which === this.keyCodes[dir]) {
         this.state = { ...this.state, [dir]: true }
