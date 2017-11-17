@@ -8,10 +8,6 @@ export default class Dungeon extends Grid {
     super(width, height, null)
 
     this.rnd = init(seed)
-
-    this.onStart = () => undefined
-    this.onProgress = () => undefined
-    this.onFinish = () => undefined
   }
 
   generate(options = { roomOptions: {}, mazeOptions: {} }) {
@@ -29,7 +25,7 @@ export default class Dungeon extends Grid {
         }
       })
       .then(() => {
-        this.onFinish()
+        return this
       })
   }
 
@@ -45,12 +41,8 @@ export default class Dungeon extends Grid {
 
   _generateStep(generator, thing) {
     return new Promise((resolve) => {
-      setTimeout(() => {
-        generator.generateStep()
-        const percent = Math.round(generator.percentDone() * 100)
-        this.onProgress(thing, percent)
-        resolve()
-      }, 0)
+      generator.generateStep()
+      resolve()
     })
       .then(() => {
         if (generator.canGenerate()) return this._generateStep(generator, thing)

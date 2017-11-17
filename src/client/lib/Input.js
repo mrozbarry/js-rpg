@@ -25,16 +25,17 @@ export default class Input {
     }
   }
 
-  constructor(preset) {
+  constructor(preset, onChange) {
     this.mapKeyCodes(Input.presets[preset] || Input.presets.wasd)
-    this.reset()
-    this.state = { up: false, left: false, down: false, right: false }
 
     this.keyDown = this.keyDown.bind(this)
     this.keyUp = this.keyUp.bind(this)
     this.reset = this.reset.bind(this)
 
     this._isBound = false
+    this.onChange = onChange || (() => {})
+
+    this.reset()
   }
 
   bind() {
@@ -64,29 +65,36 @@ export default class Input {
   keyDown(e) {
     if (e.altKey || e.ctrlKey || e.metaKey) return
 
-    return mappings.map((dir) => {
+    const changed = mappings.map((dir) => {
       if (e.which === this.keyCodes[dir]) {
         this.state = { ...this.state, [dir]: true }
         return true
       }
       return false
     }).some((a) => a)
+
+    this.onChange(this.state)
+    return changed
   }
 
   keyUp(e) {
-    return mappings.map((dir) => {
+    const changed = mappings.map((dir) => {
       if (e.which === this.keyCodes[dir]) {
         this.state = { ...this.state, [dir]: false }
         return true
       }
       return false
     }).some((a) => a)
+
+    this.onChange(this.state)
+    return changed
   }
 
   reset() {
     mappings.forEach((dir) => {
       this.state = { ...this.state, [dir]: false }
     })
+    this.onChange(this.state)
   }
 
   hasActiveKeys() {

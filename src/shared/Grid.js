@@ -8,6 +8,15 @@ export default class Grid {
     this.data = " ".repeat(width * height).split("").map(() => defaultValue)
   }
 
+  serialize() {
+    return {
+      width: this.width,
+      height: this.height,
+      data: this.data.map((cell) => cell ? cell.serialize() : null)
+    }
+  }
+
+
   _coordToIndex(x, y) {
     return (y * this.width) + x
   }
@@ -84,6 +93,11 @@ export class Cell {
     this.meta = {}
   }
 
+  serialize() {
+    const { tile, walls, meta } = this
+    return { tile, walls, meta }
+  }
+
   asBlank() {
     this.tile = TILES.blank
     this.walls = ""
@@ -127,6 +141,12 @@ export class Cell {
         this.walls = this.walls.replace(wall, "")
       }
     })
+  }
+
+  hasWalls(walls) {
+    return this._onlyValidWalls(walls)
+      .split("")
+      .every((w) => this.walls.indexOf(w) >= 0)
   }
 
   _onlyValidWalls(walls) {

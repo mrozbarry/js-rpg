@@ -12,6 +12,7 @@ module.exports = {
   output: {
     filename: "[name].js",
     publicPath: "/",
+    path: path.resolve(ROOT, "dest", "public"),
   },
 
   module: {
@@ -26,10 +27,4 @@ module.exports = {
   },
 
   target: "web",
-
-  devServer: {
-    port: 8080,
-    host: "0.0.0.0",
-    contentBase: path.resolve(ROOT, "public"),
-  },
 }

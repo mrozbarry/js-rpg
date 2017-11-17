@@ -3,45 +3,21 @@
 <head>
   <link href="https://fonts.googleapis.com/css?family=VT323" rel="stylesheet">
   <style type="text/css">
-    .progress {
-      box-sizing: border-box;
-      position: absolute;
-      top: calc(50% - 12px);
-      left: calc(50% - 250px);
-      width: 500px;
-      padding: 2px;
-      border: 1px black solid;
-      margin: 10px 0;
-      background-color: white;
+    html, body {
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      height: 100%;
     }
-
-    .progress-bar {
-      box-sizing: border-box;
-      height: 25px;
-      background-color: red;
-      transition: width .2s cubic-bezier(0.1, 0.7, 1.0, 0.1);
-      overflow: visible;
-      text-overflow: visible;
-      word-wrap: nowrap;
-    }
-
-    .progress-text {
-      font-family: "VT322", monospace;
-      font-size: 16px;
-      font-weight: bold;
-      padding-top: 6px;
+    canvas {
+      display: block;
     }
   </style>
 </head>
-
 <body>
-
   <canvas id="canvas"></canvas>
-  <div class="progress" style="display: none;">
-    <div class="progress-bar" style="width: 0%"></div>
-    <div class="progress-text"></div>
-  </div>
 
-  <script type="text/javascript" src="index.js"></script>
+  <script type="text/javascript" src="/client.js"></script>
 </body>
 </html>
+
