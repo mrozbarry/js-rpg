@@ -44,11 +44,12 @@ export default class Renderer {
 
     this.drawMap(dungeon)
     this.drawActors(actors)
+    this.drawVisibility(dungeon)
   }
 
   drawMap(dungeon) {
     dungeon.data.forEach((cell, idx) => {
-      if (!cell) return
+      if (!cell || cell.seen === false) return
       const y = Math.floor(idx / dungeon.width)
       const x = idx % dungeon.width
 
@@ -57,6 +58,10 @@ export default class Renderer {
       const cellY = (y * this.tileSize) //- this.camera.y
       this.ctx.fillRect(cellX, cellY, this.tileSize, this.tileSize)
       this._drawWalls(cell, cellX, cellY, this.tileSize, this.tileSize)
+      if (cell.visible === false) {
+        this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)"
+        this.ctx.fillRect(cellX, cellY, this.tileSize, this.tileSize)
+      }
     })
 
     // this.ctx.setTransform(1, 0, 0, 1, 0, 0)
@@ -69,6 +74,20 @@ export default class Renderer {
       const actorY = actor.position.y * this.tileSize
       this.ctx.fillStyle = "red"
       this.ctx.fillRect(actorX - (this.actorSize / 2), actorY - (this.actorSize / 2), this.actorSize, this.actorSize)
+    })
+  }
+
+  drawVisibility(dungeon) {
+    dungeon.data.forEach((cell, idx) => {
+      if (!cell || cell.seen === false) return
+      const y = Math.floor(idx / dungeon.width)
+      const x = idx % dungeon.width
+
+      this.ctx.fillStyle = cell.meta.colour
+      const cellX = (x * this.tileSize) //- this.camera.x
+      const cellY = (y * this.tileSize) //- this.camera.y
+      this.ctx.fillStyle = `rgba(0, 0, 0, ${cell.visible})`
+      this.ctx.fillRect(cellX, cellY, this.tileSize, this.tileSize)
     })
   }
 
