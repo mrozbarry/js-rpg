@@ -1,0 +1,34 @@
+{
+  "rules": {
+    ".read": "true",
+    "events": {
+      ".write": "auth !== null",
+      "$eventId": {
+        "type": { ".validate": "newData.isString()" },
+        "actorId": { ".validate": "newData.isString()" }
+      }
+    },
+    "state": {
+      ".write": "auth !== null",
+      ".validate": "newData.isString()"
+    },
+    "dungeon": {
+      ".write": "auth !== null"
+    },
+    "actors": {
+      ".indexOn": "online",
+      "$uid": {
+        ".read": "true",
+        "position": {
+          ".write": "auth !== null",
+          "x": { ".validate": "newData.isNumber()" },
+          "y": { ".validate": "newData.isNumber()" },
+        },
+        "online": {
+          ".write": "$uid === auth.uid",
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    }
+  }
+}
