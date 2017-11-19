@@ -1,55 +1,38 @@
+import * as firebase from "firebase"
 import Client from "./lib/Client"
-import Server from "../shared/Server"
-import Connection from "./lib/LocalConnection"
 
-const server = new Server()
-server.newDungeon()
+// For local
+// import Server from "../shared/Server"
+// import ServerLocalAdapter from "../shared/ServerLocalAdapter"
+// import LocalConnection from "./lib/LocalConnection"
+//import ServerFirebaseAdapter from "../shared/ServerFirebaseAdapter"
 
-const connection = new Connection(server)
+import FirebaseConnection from "./lib/FirebaseConnection"
 
-
-const client = new Client({
-  connection: connection,
-  canvas: document.getElementById("canvas")
+firebase.initializeApp({
+  apiKey: "AIzaSyAft80pWp2Lq_IIuzAgIgjBsLIs6TaeqU0",
+  authDomain: "js-rpg-3ee33.firebaseapp.com",
+  databaseURL: "https://js-rpg-3ee33.firebaseio.com",
+  projectId: "js-rpg-3ee33"
 })
 
+firebase
+  .auth()
+  .signInAnonymously()
+  .then((user) => {
+    const connection = new FirebaseConnection(firebase)
 
-// // import Renderer from "./lib/Renderer"
-//
-// const dungeon = new Dungeon({
-//   seed: (new Date()).toISOString(),
-//   width: 90,
-//   height: 40,
-// })
-// const client = new Client({
-//   canvas: document.getElementById("canvas"),
-//   width: 1600,
-//   height: 700
-// })
-//
-// function main() {
-//   client.renderer.setDungeon(dungeon)
-//   client.renderer.tileSize = 64
-//
-//   client.start()
-//   dungeon
-//     .generate({
-//       // roomOptions: false,
-//       roomOptions: {
-//         minRoomSize: 5,
-//         maxRoomSize: 25,
-//         maxAttempts: 200
-//       },
-//       mazeOptions: {
-//         chanceOfHorizontalJoin: 80,
-//         chanceOfVerticalJoin: 50
-//       },
-//       doorOptions: {
-//         chance: 30
-//       }
-//     })
-//
-// }
-//
-// main()
-//
+    // For local
+    // const adapter = new ServerLocalAdapter()
+    // const connection = new LocalConnection(adapter)
+    // const server = new Server(adapter)
+
+    const client = new Client({
+      connection: connection,
+      canvas: document.getElementById("canvas")
+    })
+
+    // For local
+    // server.newDungeon()
+  })
+

@@ -1,8 +1,5 @@
-import Broadcaster from "../../shared/Broadcaster"
-
-export default class Connection extends Broadcaster {
+export default class Connection {
   constructor() {
-    super()
     this.state = {}
   }
 

@@ -49,6 +49,7 @@ export default class RoomGenerator extends Generator {
           cell.asFloor(wallDirections)
           cell.meta.colour = "#BBB"
           cell.meta.isRoom = true
+          cell.meta.roomId = this.rooms.length
 
           this.dungeon.set(wx, wy, cell)
         }

@@ -7,46 +7,42 @@ export default class Client {
     this.renderer = new Renderer(canvas)
     this.camera = new Camera(canvas)
 
-    this._actorId = null
-    this._worldState = {}
-
     this.connection = connection
-    this.connection.addListener(this._handleWorldUpdate.bind(this))
 
     this.input = new Input("vim")
     this.input.bind()
 
     this.connection.connect()
-      .then((actorId) => {
-        this._actorId = actorId
-        this.input.onChange = (state) => {
-          this.connection.sendInput(actorId, state)
-        }
-      })
+    this.input.onChange = (input) => {
+      this.connection.sendInput(input)
+    }
 
+    this._tick = this._tick.bind(this)
     this.lastTickTime = null
     this.renderer.init().then(() => this._tick())
   }
 
   _tick() {
+    this._updateCamera()
+
     this.renderer.clear()
     this.camera.transform(this.renderer)
-    this.renderer.draw(this._worldState)
+    this.renderer.draw(this.connection.state)
     this.camera.reset()
+
+    if (this.connection.state.state === "loading") {
+      setTimeout(this._tick, 250)
+    } else {
+      requestAnimationFrame(this._tick)
+    }
   }
 
-  _handleWorldUpdate({ dungeon, actors, state }, eventName) {
-    if (this._actorId) {
-      const actor = actors[this._actorId]
-      this.camera.move(actor.position)
+  _updateCamera() {
+    if (this.connection.actorId && this.connection.state.actors) {
+      const actor = this.connection.state.actors[this.connection.actorId]
+      if (actor) {
+        this.camera.move(actor.position)
+      }
     }
-
-    this._worldState = { ...this._worldState, actors, state }
-
-    if (eventName === "dungeon") {
-      this._worldState = { ...this._worldState, dungeon }
-    }
-
-    this._tick()
   }
 }

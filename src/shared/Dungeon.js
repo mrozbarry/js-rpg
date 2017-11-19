@@ -6,12 +6,28 @@ import { init } from "./random"
 export default class Dungeon extends Grid {
   constructor({ width, height, seed }) {
     super(width, height, null)
+    this.seed = seed
 
     this.rnd = init(seed)
   }
 
-  generate(options = { roomOptions: {}, mazeOptions: {} }) {
-    const { roomOptions, mazeOptions } = options
+  serialize() {
+    const { width, height, seed, generatorOptions } = this
+    return { width, height, seed, generatorOptions }
+  }
+
+  static deserialize({ width, height, seed, generatorOptions }) {
+    const d = new Dungeon({ width, height, seed })
+    d.setGeneratorOptions(generatorOptions)
+    return d
+  }
+
+  setGeneratorOptions(options = { roomOptions: {}, mazeOptions: {} }) {
+    this.generatorOptions = options
+  }
+
+  generate() {
+    const { roomOptions, mazeOptions } = this.generatorOptions
     return Promise.resolve()
       .then(this.onStart)
       .then(() => {

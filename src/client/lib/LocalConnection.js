@@ -1,34 +1,37 @@
 import Connection from "./Connection"
+import Dungeon from "../../shared/Dungeon"
 
 export default class LocalConnection extends Connection {
-  constructor(server) {
+  constructor(adapter) {
     super()
-    this.server = server
-    this.server.addListener(this._handleServerUpdate.bind(this))
     this.actorId = null
+    this.adapter = adapter
+    this.adapter.trigger = this.adapterTrigger.bind(this)
   }
 
-  _handleServerUpdate(state, eventName) {
-    this.trigger(state, eventName)
+  adapterTrigger(eventName, payload) {
+    const { dungeon } = this.state
+    this.state = { ...this.state, ...payload }
+    if (payload.dungeon && !dungeon) {
+      const d = Dungeon.deserialize(payload.dungeon)
+      d.generate()
+      this.state.dungeon = d
+    }
   }
 
   connect() {
-    return this.server.onConnect()
-      .then((actorId) => {
-        this.actorId = actorId
-        return actorId
-      })
-      .catch((err) => {
-        console.warn(err)
-      })
+    this.actorId = (new Date()).toISOString().replace(/[^0-9A-Z]/g, "")
+    this.adapter.pushEvent("join", { actorId: this.actorId })
   }
 
   disconnect() {
-    if (!this.actorId) return
-    return this.server.onDisconnect(this.actorId)
+    const { actorId } = this
+    this.actorId = null
+    this.adapter.pushEvent("part", { actorId })
   }
 
-  sendInput(id, input) {
-    this.server.onInput(id, input)
+  sendInput(input) {
+    const { actorId } = this
+    this.adapter.pushEvent("input", { actorId, input })
   }
 }

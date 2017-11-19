@@ -63,6 +63,7 @@ export default class Renderer {
   }
 
   drawActors(actors) {
+    if (!actors) return
     Object.keys(actors).forEach((id) => {
       const actor = actors[id]
       const actorX = actor.position.x * this.tileSize

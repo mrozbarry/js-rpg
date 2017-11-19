@@ -16,6 +16,13 @@ export default class Grid {
     }
   }
 
+  static deserialize({ width, height, data }) {
+    if (data.length !== (width * height)) throw new Error("Data length doesn't match size constraints")
+    const g = new Grid(width, height)
+    g.data = data.map((d) => Cell.deserialize(d))
+    return g
+  }
+
 
   _coordToIndex(x, y) {
     return (y * this.width) + x
@@ -96,6 +103,13 @@ export class Cell {
   serialize() {
     const { tile, walls, meta } = this
     return { tile, walls, meta }
+  }
+
+  static deserialize({ tile, walls, meta }) {
+    const c = new Cell()
+    c.tile = tile
+    c.walls = walls
+    c.meta = { ...meta }
   }
 
   asBlank() {
