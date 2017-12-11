@@ -1,4 +1,4 @@
-import { randInt, randColour } from "./random"
+import { randInt /*, randColour*/ } from "./random"
 import Generator from "./Generator"
 import { Cell } from "./Grid"
 
@@ -34,7 +34,7 @@ export default class RoomGenerator extends Generator {
     if (this._roomDoesntIntersectAny(room)) {
       this.rooms.push(room)
 
-      const colour = randColour(this.dungeon.rnd)
+      //const colour = randColour(this.dungeon.rnd)
       for(let wx = room.x; wx < room.x + room.w; wx += 1) {
         for(let wy = room.y; wy < room.y + room.h; wy += 1) {
           const wallDirections =
@@ -47,7 +47,7 @@ export default class RoomGenerator extends Generator {
 
           const cell = new Cell()
           cell.asFloor(wallDirections)
-          cell.meta.colour = "#BBB"
+          //cell.meta.colour = "#BBB"
           cell.meta.isRoom = true
           cell.meta.roomId = this.rooms.length
 

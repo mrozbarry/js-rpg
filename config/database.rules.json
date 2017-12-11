@@ -1,34 +1,66 @@
 {
   "rules": {
-    ".read": "true",
-    "events": {
-      ".write": "auth !== null",
-      "$eventId": {
-        "type": { ".validate": "newData.isString()" },
-        "actorId": { ".validate": "newData.isString()" }
-      }
-    },
     "state": {
-      ".write": "auth !== null",
+      ".read": "true",
+      ".write": "auth !== null && auth.token.isAdmin === true",
       ".validate": "newData.isString()"
     },
-    "dungeon": {
-      ".write": "auth !== null"
-    },
+
+
     "actors": {
-      ".indexOn": "online",
+      ".read": "true",
+      ".indexOn": ["floorId", "state"],
+
       "$uid": {
-        ".read": "true",
         "position": {
-          ".write": "auth !== null",
+          ".write": "auth !== null && auth.token.isAdmin === true",
+          ".validate": "newData.hasChildren(['x', 'y', 'dungeonId'])",
+
           "x": { ".validate": "newData.isNumber()" },
           "y": { ".validate": "newData.isNumber()" },
+          "dungeonId": { ".validate": "newData.isString() && root.child('dungeons').child(newData.val()).exists()" }
         },
-        "online": {
+
+        "state": {
           ".write": "$uid === auth.uid",
-          ".validate": "newData.isBoolean()"
+          ".validate": "newData.isString()"
+        },
+
+        "type": {
+          ".write": "$uid === auth.uid",
+          ".validate": "newData.isString()"
+        },
+
+        "input": {
+          ".write": "$uid === auth.uid",
+          "up": { ".validate": "newData.isBoolean()" },
+          "right": { ".validate": "newData.isBoolean()" },
+          "down": { ".validate": "newData.isBoolean()" },
+          "left": { ".validate": "newData.isBoolean()" },
+          "action": { ".validate": "newData.isBoolean()" }
+        }
+      }
+    },
+
+    "dungeons": {
+      "$dungeonId": {
+        ".read": "(auth !== null && auth.token.isAdmin === true) || (root.child('actors').child(auth.uid).child('position').child('dungeonId').val() === $dungeonId)",
+        ".write": "auth !== null && auth.token.isAdmin === true",
+
+        "dungeon": {
+          ".validate": "newData.hasChildren(['initializer', 'options'])",
+          "initializer": {
+            ".validate": "newData.hasChildren(['width', 'height', 'seed'])",
+            "width": { ".validate": "newData.isNumber()" },
+            "height": { ".validate": "newData.isNumber()" },
+            "seed": { ".validate": "newData.isString() && newData.val() === $dungeonId" }
+          },
+          "options": {
+            ".validate": "newData.hasChildren(['roomOptions', 'mazeOptions'])"
+          }
         }
       }
     }
+
   }
 }

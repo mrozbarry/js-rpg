@@ -20,5 +20,4 @@ export default class Camera {
   reset() {
     this.ctx.resetTransform()
   }
-
 }

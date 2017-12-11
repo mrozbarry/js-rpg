@@ -1,7 +1,7 @@
-import Grid from "../../../src/lib/Grid.js"
+import Grid from "../Grid.js"
 import { expect } from "chai"
 
-describe("lib/Grid", () =>  {
+describe("shared/Grid", () =>  {
   describe("class Grid", () =>  {
     describe(".new", () =>  {
       it("creates a new grid with the appropriate amount of data", () =>  {
@@ -57,26 +57,26 @@ describe("lib/Grid", () =>  {
 
     })
 
-    describe("#at", () => {
+    describe("#get", () => {
       const g = new Grid(2, 2, "bar")
       g.set(0, 0, "foo")
 
       it("finds foo at 0,0", () => {
-        expect(g.at(0, 0)).to.equal("foo")
+        expect(g.get(0, 0)).to.equal("foo")
       })
 
       it("finds bar at all other coordinates", () => {
         for(let x = 0; x < 2; x++) {
           for(let y = 0; y < 2; y++) {
             if (x === 0 && y === 0) continue
-            expect(g.at(x, y)).to.equal("bar")
+            expect(g.get(x, y)).to.equal("bar")
           }
         }
       })
 
       it("finds undefined when x/y is out of range", () => {
-        expect(g.at(-1, -1)).to.equal(undefined)
-        expect(g.at(2, 2)).to.equal(undefined)
+        expect(g.get(-1, -1)).to.equal(undefined)
+        expect(g.get(2, 2)).to.equal(undefined)
       })
 
     })
@@ -95,7 +95,7 @@ describe("lib/Grid", () =>  {
         const randValue = Math.random()
         g.set(1, 1, randValue)
 
-        expect(g.at(1, 1)).to.equal(randValue)
+        expect(g.get(1, 1)).to.equal(randValue)
       })
 
       it("noops on positions out of range", () => {
@@ -160,22 +160,28 @@ describe("lib/Grid", () =>  {
 
   })
 
-  describe("#adjacentFrom", () => {
-    const g = new Grid(3, 3, " ")
-    g.data = g.data.map((_, idx) => String.fromCharCode(65 + idx))
-
-    it("returns an object with north, east, south, west keys", () => {
-      expect(g.adjacentFrom(0, 0)).to.have.keys(["north", "east", "south", "west"])
-    })
-
-    it("returns proper data for a middle-positioned x/y pair", () => {
-      expect(g.adjacentFrom(1, 1)).to.deep.equal({ north: "B", east: "F", south: "H", west: "D" })
-    })
-
-    it("returns nulls for non-contained positions", () => {
-      expect(g.adjacentFrom(0, 1)).to.deep.equal({ north: "A", east: "E", south: "G", west: undefined })
-      expect(g.adjacentFrom(2, 1)).to.deep.equal({ north: "C", east: undefined, south: "I", west: "E" })
-    })
-  })
+  // describe("#adjacentFrom", () => {
+  //   const g = new Grid(3, 3, " ")
+  //   g.data = g.data.map((_, idx) => String.fromCharCode(65 + idx))
+  //
+  //   it("returns an object with north, east, south, west keys", () => {
+  //     expect(g.adjacentFrom(0, 0)).to.have.keys([
+  //       "north",
+  //       "east",
+  //       "south",
+  //       "west"
+  //     ])
+  //   })
+  //
+  //   xit("returns proper data for a middle-positioned x/y pair", () => {
+  //     expect(g.adjacentFrom(1, 1)).to.deep.equal({ north: "B", east: "F", south: "H", west: "D" })
+  //   })
+  //
+  //   xit("returns nulls for non-contained positions", () => {
+  //     expect(g.adjacentFrom(0, 1)).to.deep.equal({ north: "A", east: "E", south: "G", west: undefined })
+  //     expect(g.adjacentFrom(2, 1)).to.deep.equal({ north: "C", east: undefined, south: "I", west: "E" })
+  //   })
+  // })
 
 })
+

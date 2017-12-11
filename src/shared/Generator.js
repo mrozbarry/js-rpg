@@ -3,8 +3,7 @@ export default class Generator {
     this.dungeon = dungeon
   }
 
-  reset() {
-  }
+  reset() {}
 
   percentDone() {
     return 0.0
@@ -16,9 +15,5 @@ export default class Generator {
 
   generateStep() {
     throw new Error("Generator subclass needs to implement #generateStep()")
-  }
-
-  commit() {
-    throw new Error("Generator subclass needs to implement #commit()")
   }
 }

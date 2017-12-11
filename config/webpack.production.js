@@ -12,7 +12,7 @@ module.exports = {
   output: {
     filename: "[name].js",
     publicPath: "/",
-    path: path.resolve(ROOT, "dest", "public"),
+    path: path.resolve(ROOT, "public"),
   },
 
   module: {

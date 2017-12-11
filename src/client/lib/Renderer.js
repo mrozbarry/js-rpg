@@ -1,10 +1,17 @@
+import Camera from "./Camera"
+import Dungeon from "../../shared/Dungeon"
+
 export default class Renderer {
-  constructor(canvas) {
+  constructor (canvas) {
     this.tileSize = 64
     this.actorSize = this.tileSize / 4
     this.canvas = canvas
     this.ctx = canvas.getContext("2d")
     this.ctx.font = "32px VT323"
+
+    this.camera = new Camera(canvas)
+
+    this.dungeon = null
 
     window.addEventListener("resize", this.resize.bind(this), false)
     this.width = 0
@@ -12,14 +19,29 @@ export default class Renderer {
     this.resize()
   }
 
-  init() {
+
+  getCamera () {
+    return this.camera
+  }
+
+
+  init () {
     const vt323 = new FontFace("VT323", "url(https://fonts.gstatic.com/s/vt323/v9/vB0CfoJ37mvN-Rdp92NUWaCWcynf_cDxXwCLxiixG1c.woff2)")
     return vt323.load()
   }
 
-  resize() {
-    if (this._resizeTimeout) clearTimeout(this._resizeTimeout)
 
+  setDungeon ({ dungeon }) {
+    const d = Dungeon.deserialize(dungeon)
+    return d.generate()
+      .then(() => {
+        this.dungeon = d
+      })
+  }
+
+
+  resize () {
+    if (this._resizeTimeout) clearTimeout(this._resizeTimeout)
 
     this._resizeTimeout = setTimeout(() => {
       const { body } = document
@@ -32,40 +54,55 @@ export default class Renderer {
     }, 5)
   }
 
-  clear() {
+
+  clear () {
     if (!this.ctx) return
 
     this.ctx.fillStyle = "#444"
     this.ctx.fillRect(0, 0, this.width, this.height)
   }
 
-  draw({ dungeon, actors }) {
-    if (!this.ctx || !dungeon) return
 
-    this.drawMap(dungeon)
+  draw (actors) {
+    if (!this.ctx || !this.dungeon) return
+
+    this.camera.transform(this)
+    this.drawMap()
     this.drawActors(actors)
+    this.camera.reset()
   }
 
-  drawMap(dungeon) {
-    dungeon.data.forEach((cell, idx) => {
+
+  drawMap () {
+    const position = { x: this.camera.x, y: this.camera.y }
+
+    this.dungeon.data.forEach((cell, idx) => {
       if (!cell) return
-      const y = Math.floor(idx / dungeon.width)
-      const x = idx % dungeon.width
+      const y = Math.floor(idx / this.dungeon.width)
+      const x = idx % this.dungeon.width
+
+      const dist = Math.sqrt(
+        ((position.x - x) * (position.x - x)) +
+        ((position.y - y) * (position.y - y))
+      )
+
+      if (dist > 6) return
+      // if (!this._canSeeTile(position, { x, y })) return
 
       this.ctx.fillStyle = cell.meta.colour
-      const cellX = (x * this.tileSize) //- this.camera.x
-      const cellY = (y * this.tileSize) //- this.camera.y
+      const cellX = Math.floor(x * this.tileSize) //- this.camera.x
+      const cellY = Math.floor(y * this.tileSize) //- this.camera.y
       this.ctx.fillRect(cellX, cellY, this.tileSize, this.tileSize)
       this._drawWalls(cell, cellX, cellY, this.tileSize, this.tileSize)
     })
-
-    // this.ctx.setTransform(1, 0, 0, 1, 0, 0)
   }
 
-  drawActors(actors) {
+
+  drawActors (actors) {
     if (!actors) return
     Object.keys(actors).forEach((id) => {
       const actor = actors[id]
+      if (!actor) return
       const actorX = actor.position.x * this.tileSize
       const actorY = actor.position.y * this.tileSize
       this.ctx.fillStyle = "red"
@@ -73,7 +110,7 @@ export default class Renderer {
     })
   }
 
-  _drawWalls(cell, x, y, w, h) {
+  _drawWalls (cell, x, y, w, h) {
     const wall = {
       N: { x1: x, y1: y, x2: x + w, y2: y },
       E: { x1: x + w, y1: y, x2: x + w, y2: y + h },

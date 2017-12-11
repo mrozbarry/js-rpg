@@ -13,17 +13,17 @@ export default class Dungeon extends Grid {
 
   serialize() {
     const { width, height, seed, generatorOptions } = this
-    return { width, height, seed, generatorOptions }
+    return { initializer: { width, height, seed }, generatorOptions }
   }
 
-  static deserialize({ width, height, seed, generatorOptions }) {
-    const d = new Dungeon({ width, height, seed })
+  static deserialize({ initializer, generatorOptions }) {
+    const d = new Dungeon(initializer)
     d.setGeneratorOptions(generatorOptions)
     return d
   }
 
   setGeneratorOptions(options = { roomOptions: {}, mazeOptions: {} }) {
-    this.generatorOptions = options
+    this.generatorOptions = { ...options }
   }
 
   generate() {

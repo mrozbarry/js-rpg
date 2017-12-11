@@ -7,6 +7,7 @@ module.exports = {
 
   entry: {
     client: path.resolve(ROOT, "src", "client", "index.js"),
+    server: path.resolve(ROOT, "src", "server", "index.web.js"),
   },
 
   output: {
