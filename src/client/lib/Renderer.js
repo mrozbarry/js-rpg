@@ -1,5 +1,6 @@
 import Camera from "./Camera"
 import Dungeon from "../../shared/Dungeon"
+import visibility, { initialVisibility } from "../../shared/visibility"
 
 export default class Renderer {
   constructor (canvas) {
@@ -10,6 +11,11 @@ export default class Renderer {
     this.ctx.font = "32px VT323"
 
     this.camera = new Camera(canvas)
+    this.visibility = initialVisibility()
+    this.camera.onChange = ({ x, y }) => {
+      this.visibility = visibility(this.dungeon, { x, y }, this.visibility)
+      console.log(this.visibility)
+    }
 
     this.dungeon = null
 
@@ -32,11 +38,7 @@ export default class Renderer {
 
 
   setDungeon ({ dungeon }) {
-    const d = Dungeon.deserialize(dungeon)
-    return d.generate()
-      .then(() => {
-        this.dungeon = d
-      })
+    this.dungeon = dungeon
   }
 
 
@@ -76,18 +78,12 @@ export default class Renderer {
   drawMap () {
     const position = { x: this.camera.x, y: this.camera.y }
 
-    this.dungeon.data.forEach((cell, idx) => {
+    this.visibility.currentlyVisibleIndexes.forEach((index) => {
+      const cell = this.dungeon.data[index]
       if (!cell) return
-      const y = Math.floor(idx / this.dungeon.width)
-      const x = idx % this.dungeon.width
 
-      const dist = Math.sqrt(
-        ((position.x - x) * (position.x - x)) +
-        ((position.y - y) * (position.y - y))
-      )
-
-      if (dist > 6) return
-      // if (!this._canSeeTile(position, { x, y })) return
+      const y = Math.floor(index / this.dungeon.width)
+      const x = index % this.dungeon.width
 
       this.ctx.fillStyle = cell.meta.colour
       const cellX = Math.floor(x * this.tileSize) //- this.camera.x
@@ -95,6 +91,23 @@ export default class Renderer {
       this.ctx.fillRect(cellX, cellY, this.tileSize, this.tileSize)
       this._drawWalls(cell, cellX, cellY, this.tileSize, this.tileSize)
     })
+
+    // this.dungeon.data.forEach((cell, idx) => {
+    //   if (!cell) return
+    //   const y = Math.floor(idx / this.dungeon.width)
+    //   const x = idx % this.dungeon.width
+    //
+    //   const dist = Math.sqrt(
+    //     ((position.x - x) * (position.x - x)) +
+    //     ((position.y - y) * (position.y - y))
+    //   )
+    //
+    //   this.ctx.fillStyle = cell.meta.colour
+    //   const cellX = Math.floor(x * this.tileSize) //- this.camera.x
+    //   const cellY = Math.floor(y * this.tileSize) //- this.camera.y
+    //   this.ctx.fillRect(cellX, cellY, this.tileSize, this.tileSize)
+    //   this._drawWalls(cell, cellX, cellY, this.tileSize, this.tileSize)
+    // })
   }
 
 

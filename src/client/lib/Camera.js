@@ -6,8 +6,12 @@ export default class Camera {
   }
 
   move({ x, y }) {
+    const changed = this.x !== x || this.y !== y
     this.x = x
     this.y = y
+    if (changed && this.onChange) {
+      this.onChange({ x, y })
+    }
   }
 
   transform({ width, height, tileSize }) {

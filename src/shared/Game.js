@@ -2,7 +2,7 @@ import uuidv4 from "uuid/v4"
 
 export const initialGameState = (timerFn) => ({
   initialDungeonId: "",
-  dungeons: {},
+  dungeons: [],
   actors: [],
   timerFn: timerFn,
   lastTick: timerFn(),
@@ -31,10 +31,10 @@ export default function gameTick(prevState) {
       if (!actor.position.dungeonId) {
         actorDungeonId = state.initialDungeonId
       }
-      const dungeon = state.dungeons[actorDungeonId]
+      const dungeon = state.dungeons.find((d) => d.id === actorDungeonId)
       return integrateActorInDungeon(
         state.timestepValue,
-        dungeon,
+        dungeon.dungeon,
         state.actorTypeSpeeds[actor.type] || 1,
         actor
       )

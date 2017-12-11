@@ -1,13 +1,12 @@
 import Input from "./Input"
 import Renderer from "./Renderer"
-//import Dungeon from "../../shared/Dungeon"
+import Dungeon from "../../shared/Dungeon"
 import gameTick, { initialGameState } from "../../shared/Game"
 import uuidv4 from "uuid/v4"
 
 export default class Client {
   constructor ({ userId, canvas, firebaseDatabase }) {
     this.state = {}
-    this.dungeonObjects = {}
     this.userId = userId
     this.database = firebaseDatabase
 
@@ -82,8 +81,6 @@ export default class Client {
       }]
     }
 
-    this.dungeonObjects = initialDungeonObjects()
-
     return Promise.resolve()
   }
 
@@ -116,7 +113,7 @@ export default class Client {
     const id = uuidv4()
     const dungeon = {
       id,
-      dungeon : {
+      dungeon: Dungeon.deserialize({
         initializer: {
           width: 100,
           height: 100,
@@ -133,17 +130,17 @@ export default class Client {
             chanceOfMultipleVerticalJoins: 50
           }
         }
-      }
+      })
     }
 
-    return Promise.resolve()
+
+    return dungeon.dungeon.generate()
       .then(() => {
         this.state = {
           ...this.state,
           dungeons: this.state.dungeons.concat(dungeon),
-          initialDungeonId: id
+          initialDungeonId: this.state.initialDungeonId || id
         }
-
       })
   }
 
@@ -153,13 +150,6 @@ export default class Client {
       .then(() => {
         const dungeon = this.state.dungeons.find((d) => d.id === this.state.initialDungeonId)
         return this.renderer.setDungeon(dungeon)
-          .then(() => {
-            this.dungeonObjects = injectDungeonObject(
-              this.state.initialDungeonId,
-              this.renderer.dungeon,
-              this.dungeonObjects
-            )
-          })
       })
   }
 

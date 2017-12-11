@@ -79,19 +79,6 @@ export default class Grid {
 
     return this
   }
-
-  // adjacentFrom(x, y, dist = 1) {
-  //   return {
-  //     "north": this.get(x, y - dist),
-  //     "north-east": this.get(x + dist, y - dist),
-  //     "east": this.get(x + dist, y),
-  //     "south-east": this.get(x + dist, y + dist),
-  //     "south": this.get(x, y + dist),
-  //     "south-west": this.get(x - dist, y + dist),
-  //     "west": this.get(x - dist, y),
-  //     "north-west": this.get(x - dist, y - dist),
-  //   }
-  // }
 }
 
 export class Cell {
